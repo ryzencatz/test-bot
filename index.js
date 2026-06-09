@@ -34,23 +34,26 @@ for (const folder of commandFolders) {
     }
 }
 
-client.on(Events.InteractionCreate, (interaction) => {
-	if (!interaction.isChatInputCommand()) return; 
-	const command = interaction.client.commands.get(interaction.commandName);
+client.on(Events.InteractionCreate, async (interaction) => {
+	if (!interaction.isChatInputCommand()) return; // so that it responds to only slash commands
 
+    // gets the corresponding command file for the given commandName and gives an error if none is found
+	const command = interaction.client.commands.get(interaction.commandName);
     if (!command) {
-        console.error(`No command matching ${interaction.commandName} was found.`);
+        console.error(`No command matching ${interaction.commandName} was found.`); 
         return;
     }
 
+    // calls the execute method in the command file
     try {
         await command.execute(interaction);
     } catch (error) {
         console.error(error);
+        // if bot already replied
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({
+            await interaction.followUp({ 
                 content: "There was an error while executing this command.",
-                flags: MessageFlags.Ephemeral,
+                flags: MessageFlags.Ephemeral, // sends content to user who started the interaction
             });
         } else {
             await interaction.reply({
