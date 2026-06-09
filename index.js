@@ -1,39 +1,43 @@
-// imports
+// ignore the amount of comments here; we all have different coping mechanisms
+
 const fs = require("node:fs");
 const path = require("node:path");
 const { Client, Events, GatewayIntentBits, Collection, MessageFlags } = require("discord.js");
 
-// create new client instance
+// create a new Client object aka the bot's connection to discord
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-// means when the bot is connected, run this code (the console.log)
-// .once means run one time only as the name says lol
-// user is what the client is logged in as: in this case, its the bot[12...] 
+// making sure u ran the `--env-file=.env` part.
+if (!process.env.DISCORD_TOKEN) {
+  console.error('\nWARNING WARNING YOU\'RE GETTING HACKED\n\nno actually your token is not set\n');
+  process.exit(1);
+}
+
+// assigns a Collection object to the commands property in client
+client.commands = new Collection();
+
+// load command files in a much more compact way compared to just "require"-ing them manually (apparently it's called dynamic command loading)
+const foldersPath = path.join(__dirname, 'commands'); // [absolute path to project]/commands. let's just call [absolute path to project] as ninja-cat
+const commandFolders = fs.readdirSync(foldersPath); // stores the folders in ninja-cat/commands in an array called commandFolders
+
+for (const folder of commandFolders) {
+    const commandsPath = path.join(foldersPath, folder); // foldersPath/folder = ninja-cat/command/utlity for example
+    const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js')); // stores the .js files from folder in array commandFiles
+    for (const file of commandFiles) {
+        const filePath = path.join(commandsPath, file); // ninja-cat/command/utility/ping.js
+        const command = require(filePath); // imports ninja-cat/command/utilify/ping.js 
+        if ('data' in command && 'execute' in command) { // make sure each command file has data and execute 
+            client.commands.set(command.data.name, command); // in the commands Collection object, set the name of the command as the key and the value as the "import" of the command file. 
+        } else {
+            console.log(`[WARNING] command at ${filePath} is missing a required "data" or "execute" property. go fix it. unless you intentionally don't want to.`);
+        }
+    }
+}
+
+// run when bot is ready 
 client.once(Events.ClientReady, (readyClient) => {
     console.log(`ready! logged in as ${readyClient.user.tag}`);
 });
 
-// make sure I loaded variables from .env before starting the bot
-if (!process.env.DISCORD_TOKEN) {
-  console.error('DISCORD_TOKEN is not set');
-  process.exit(1);
-}
-
-client.commands = new Collection();
-
-const foldersPath = path.join(__dirname, 'commands'); // foldersPath = ./commands 
-const commandFolders = fs.readdirSync(foldersPath); // stores the folders in ./commands in a const called commandFolders
-
-for (const folder of commandFolders) {
-    const commandsPath = path.join(foldersPath, folder); // comandsPath = foldersPath/folder = ./command/[each folder]
-    const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js')); // stores the .js files from folder in commandFiles
-    for (const file of commandFiles) {
-        const filePath = path.join(commandsPath, file); // 
-        const command = require(filePath); // basically imports filePath
-        if ('data' in command && 'execute' in command) {
-            client.commands.set(command.data.name, command);
-        } else {
-            console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-        }
-    }
-}
+// log in!
+client.login(process.env.DISCORD_TOKEN);
