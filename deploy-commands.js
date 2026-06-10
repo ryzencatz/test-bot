@@ -9,17 +9,16 @@ const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
-    const commandsPath = path.join(foldersPath, folder); // so like utility or fun 
+    const commandsPath = path.join(foldersPath, folder);
     const commandFiles = fs.readdirSync(commandsPath);
 
     for (const file of commandFiles) {
         const filePath = path.join(commandsPath, file);
         const command = require(filePath);
         if ('data' in command && 'execute' in command) {
-            // because command.data is a SlashCommandBuilder object, so toJSON converts it to a normal object
             commands.push(command.data.toJSON());
         } else {
-            console.log(`[WARNING] the command at ${filePath} is missing either a required "data" or "execute" property.`);
+            console.log(`[WARNING] the command at ${filePath} is missing either a required "data" or "execute" property (or both).`);
         }
     }
 }
@@ -32,11 +31,16 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
     try {
         console.log(`started refreshing ${commands.length} application (/) commands.`);
 
-        const data = await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), { body: commands });
+        const data = await rest.put(
+            Routes.applicationGuildCommands(
+                process.env.CLIENT_ID, 
+                process.env.GUILD_ID
+            ), 
+            { body: commands }
+        );
 
-        console.log(`sucessfully reloaded ${data.length} application (/) commands.`);
+        console.log("success!");
     } catch (error) { 
-        // catch and log any errors
         console.error(error);
     }
 })();

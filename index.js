@@ -1,11 +1,6 @@
-// ignore the amount of comments here; we all have different coping mechanisms
-
 const fs = require("node:fs");
 const path = require("node:path");
 const { Client, Events, GatewayIntentBits, Collection, MessageFlags } = require("discord.js");
-
-// create a new Client object aka the bot's connection to discord
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 // making sure u ran the `--env-file=.env` part.
 if (!process.env.DISCORD_TOKEN) {
@@ -13,29 +8,33 @@ if (!process.env.DISCORD_TOKEN) {
   process.exit(1);
 }
 
-// assigns a Collection object to the commands property in client
+// create a new Client object aka the bot's connection to discord
+const client = new Client({ intents: [GatewayIntentBits.Guilds] }); 
+
+// creates a commands property in client and assigns the value as a Collection object
 client.commands = new Collection();
 
-// load command files in a much more compact way compared to just "require"-ing them manually (apparently it's called dynamic command loading)
-const foldersPath = path.join(__dirname, 'commands'); // [absolute path to project]/commands. let's just call [absolute path to project] as ninja-cat
-const commandFolders = fs.readdirSync(foldersPath); // stores the folders in ninja-cat/commands in an array called commandFolders
+// load command files in a much more compact way compared to just "require"-ing them manually (dynamic command loading)
+const foldersPath = path.join(__dirname, 'commands');
+const commandFolders = fs.readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
-    const commandsPath = path.join(foldersPath, folder); // foldersPath/folder = ninja-cat/command/utlity for example
-    const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js')); // stores the .js files from folder in array commandFiles
+    const commandsPath = path.join(foldersPath, folder); 
+    const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js')); 
     for (const file of commandFiles) {
-        const filePath = path.join(commandsPath, file); // ninja-cat/command/utility/ping.js
-        const command = require(filePath); // imports ninja-cat/command/utilify/ping.js 
-        if ('data' in command && 'execute' in command) { // make sure each command file has data and execute 
-            client.commands.set(command.data.name, command); // in the commands Collection object, set the name of the command as the key and the value as the "import" of the command file. 
+        const filePath = path.join(commandsPath, file); 
+        const command = require(filePath); 
+        if ('data' in command && 'execute' in command) {
+            client.commands.set(command.data.name, command);
         } else {
-            console.log(`[WARNING] command at ${filePath} is missing a required "data" or "execute" property. go fix it. unless you intentionally don't want to.`);
+            console.log(`[WARNING] command at ${filePath} is missing a required "data" or "execute" property.`);
         }
     }
 }
 
+// executes the command when user types it in
 client.on(Events.InteractionCreate, async (interaction) => {
-	if (!interaction.isChatInputCommand()) return; // so that it responds to only slash commands
+	if (!interaction.isChatInputCommand()) return; 
 
     // gets the corresponding command file for the given commandName and gives an error if none is found
 	const command = interaction.client.commands.get(interaction.commandName);
@@ -49,11 +48,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
         await command.execute(interaction);
     } catch (error) {
         console.error(error);
-        // if bot already replied
+
+        // basically just telling the user that something went wrong
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({ 
                 content: "There was an error while executing this command.",
-                flags: MessageFlags.Ephemeral, // sends content to user who started the interaction
+                flags: MessageFlags.Ephemeral,
             });
         } else {
             await interaction.reply({
