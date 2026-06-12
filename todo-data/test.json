@@ -1,17 +1,40 @@
 {
-    "cat": "math",
-    "items": [
-        {
-            "li": "do hw",
-            "completed": false
-        },
-        {
-            "li": "study for test",
-            "completed": true
-        },
-        {
-            "li": "take the test",
-            "completed": false
-        }
-    ]
+    "ryzencatz": {
+        "comp math": [
+            {
+                "name": "1",
+                "items": [
+                    {"content": "finish hw", "completed": false},
+                    {"content": "create explainer video", "completed": true},
+                    {"content": "read solution", "completed": false}
+                ]
+            },
+            {
+                "name": "2",
+                "items": [
+                    {"content": "watch lecture", "completed": false},
+                    {"content": "groupsolve session", "completed": true},
+                    {"content": "review comp", "completed": false}
+                ]
+            }
+        ],
+        "physics": [
+            {
+                "name": "1",
+                "items": [
+                    {"content": "asldkfj", "completed": false},
+                    {"content": "saf asfdasdf afsd", "completed": true},
+                    {"content": "shfsfh shgf", "completed": false}
+                ]
+            },
+            {
+                "name": "2",
+                "items": [
+                    {"content": "zxcv", "completed": false},
+                    {"content": "zcxv xzvcxczv zcxv", "completed": true},
+                    {"content": "xvcz zxcv", "completed": false}
+                ]
+            }
+        ]
+    }
 }
