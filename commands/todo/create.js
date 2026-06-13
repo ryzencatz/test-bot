@@ -6,74 +6,119 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName("create")
         .setDescription("creates smth duh")
-        .addSubcommand()  // create a new category   opts: user
-            .setName("cat")
-            .setDescription("create a new category")
-            .addUserOption()
-                .setName("user")
-                .setDescription("the user the cat is for")
-                .setRequired(true)
-        .addSubcommand()  // create a new list       opts: cat, user, week
-            .setName("list")
+        .addSubcommand(subcommand => // create a new list       opts: cat, user, list-name ----done----
+            subcommand
+            .setName("list") 
             .setDescription("creates a new list")
-            .addUserOption()
+            .addUserOption(option =>
+                option
                 .setName("user")
                 .setDescription("the user that the list is for")
                 .setRequired(true)
-            .addStringOption()
-                .setName("week")
-                .setDescription("the week that the todo list is for")
+            )
+            .addStringOption(option => 
+                option
+                .setName("list-name")
+                .setDescription("the name of todo")
                 .setRequired(true)
-        .addSubcommand()  // create a new li         opts: user, cat, week, content ----DONE----
-            .setName("li")
-            .setDescription("creates a new list item")
-            .addStringOption()
-                .setName("user")
-                .setDescription("the user that will have the list")
-                .setRequired(true)
-            .addStringOption()
+            )
+            .addStringOption(option =>
+                option
                 .setName("cat")
                 .setDescription("the category that the list is in")
                 .setRequired(true)
-            .addStringOption()
-                .setName("week")
-                .setDescription("the week that the todo list is in")
+            )
+        )
+        .addSubcommand(subcommand =>  // create a new li         opts: user, cat, list-name, content ----DONE----
+            subcommand
+            .setName("li")
+            .setDescription("creates a new list item")
+            .addUserOption(option =>
+                option
+                .setName("user")
+                .setDescription("the user that will have the list")
                 .setRequired(true)
-            .addStringOption()
-                .setName("content")
+            )
+            .addStringOption(option =>
+                option
+                .setName("cat")
+                .setDescription("the category that the list is in")
+                .setRequired(true)
+            )
+            .addStringOption(option =>
+                option
+                .setName("list-name")
+                .setDescription("the name of todo")
+                .setRequired(true)
+            )
+            .addStringOption(option => 
+                option
+                .setName("li-content")
                 .setDescription("the content of the list item")
                 .setRequired(true)
-        .addSubcommand() // mark a li as complete   opts: user, list-name, li (the index)
-            .setName("complete")
-            .setDescription("marks a li as complete"),
-    execute(interaction) {
-        const dataPath = path.join(__dirname, 'todo=data', 'data.json');
+            )
+        ),
+    async execute(interaction) {
+        const dataPath = path.join(__dirname, '..', '..', 'todo-data', 'data.json');
         const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-
         
+        const subcommand = interaction.options.getSubcommand();
+        if (subcommand === "list") {
+            const userId = interaction.options.getUser("user").id;
+            const listName = interaction.options.getString("list-name");
+            const cat = interaction.options.getString("cat");
+
+            if (!(userId in data)) { data[userId] = {}; }
+            if (!(cat in data[userId])) { data[userId][cat] = {}; }
+            if (listName in data[userId][cat]) {
+                await interaction.reply("That list already exists.");
+                return;
+            } else { data[userId][cat][listName] = []; }
+
+            await interaction.reply(`created list "${listName}" in category "${cat}" for user "${interaction.options.getUser("user").username}"!`);
+        } else if (subcommand === "li") {
+            const userId = interaction.options.getUser("user").id;
+            const listName = interaction.options.getString("list-name");
+            const cat = interaction.options.getString("cat");
+            const content = interaction.options.getString("li-content");
+
+            if (!data[userId]?.[cat]?.[listName]) {
+                await interaction.reply("That list does not exist.");
+                return;
+            } else { data[userId][cat][listName].push({content, completed: false}); }
+
+            await interaction.reply(`created list item in "${listName}" in category "${cat}" for user "${interaction.options.getUser("user").username}" with content "${content}"!`);
+        }
+
+        fs.writeFileSync(dataPath, JSON.stringify(data, null, 4));
     }
 };
 
 
+// {
+//     "123131323123": {
+//         "comp math": {
+//             "1": []
+//         }
+//     }
+// }
 
 
 // so the data has the form :
 
 // {
-//     userid1: {
-//         cat1: [
-//             {
-//                 name:"list name",
-//                 items: [{content: "li1 content", completed: true}]
-//             }
-//         ]
-//     }
-//     userid2: {
-//         cat1: [
-//             {
-//                 name:"list name",
-//                 items: [{content: "li1 content", completed: true}]
-//             }
-//         ]
+//     "123123423412": {
+//         "comp math": {
+//             "1": [
+//                 {"content": "finish hw", "completed": false},
+//                 {"content": "create explainer video", "completed": true},
+//                 {"content": "read solution", "completed": false}
+//             ],
+//             "2": [
+//                 {"content": "watch lecture", "completed": false},
+//                 {"content": "groupsolve session", "completed": true},
+//                 {"content": "review comp", "completed": false}
+//             ]
+//         } 
 //     }
 // }
